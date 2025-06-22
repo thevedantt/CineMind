@@ -4,7 +4,7 @@ CineMind is an intelligent movie recommendation and planning system designed to 
 
 The Flask application is the core of this project, offering a visually appealing, futuristic interface with a comprehensive set of features, while the Streamlit app serves as a straightforward showcase of the underlying recommendation model.
 
-[![CineMind Landing Page](https://user-images.githubusercontent.com/…..)](https://user-images.githubusercontent.com/…..)
+![CineMind Landing Page](./assets/cinemind_landing.png)
 
 ---
 
