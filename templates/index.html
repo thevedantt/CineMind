@@ -1,1 +1,278 @@
-sh
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Movie Recommender System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 0 0 40px rgba(0, 255, 255, 0.3), 0 0 60px rgba(0, 255, 255, 0.1); }
+            50% { box-shadow: 0 0 30px rgba(0, 255, 255, 0.8), 0 0 60px rgba(0, 255, 255, 0.5), 0 0 90px rgba(0, 255, 255, 0.3); }
+        }
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(0, 255, 255, 0.3); }
+            50% { border-color: rgba(0, 255, 255, 0.8); }
+        }
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+        .glow-effect { animation: glow 3s ease-in-out infinite; }
+        .pulse-border { animation: pulse-border 2s ease-in-out infinite; }
+        .slide-in { animation: slideInUp 0.6s ease-out; }
+        .float-anim { animation: float 6s ease-in-out infinite; }
+        .gradient-text { background: linear-gradient(45deg, #00FFFF, #0080FF, #FF00FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .glass-morphism { backdrop-filter: blur(10px); background: rgba(0, 0, 0, 0.4); }
+        .movie-card-hover { transition: all 0.3s ease; }
+        .movie-card-hover:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 20px 40px rgba(0, 255, 255, 0.2); }
+        .neon-border { border: 1px solid; border-image: linear-gradient(45deg, #00FFFF, #0080FF, #00FFFF) 1; }
+        .search-glow:focus { box-shadow: 0 0 20px rgba(0, 255, 255, 0.6), inset 0 0 20px rgba(0, 255, 255, 0.1); }
+    </style>
+    <script>
+        async function addToFavourites(button) {
+            const movieId = button.getAttribute('data-movie-id');
+            try {
+                // Add loading state
+                const originalText = button.textContent;
+                button.textContent = '⏳ Adding...';
+                button.disabled = true;
+                
+                const response = await fetch('/add_to_favorites', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ movie_id: movieId })
+                });
+                
+                const data = await response.json();
+                
+                // Create custom alert with better styling
+                showCustomAlert(data.message);
+                
+                if (data.success) {
+                    // Update button with success animation
+                    button.textContent = '✨ Added to Favourites';
+                    button.classList.add('bg-gradient-to-r', 'from-green-500', 'to-emerald-500', 'hover:from-green-600', 'hover:to-emerald-600', 'glow-effect');
+                    button.classList.remove('bg-gradient-to-r', 'from-blue-600', 'to-blue-500', 'hover:from-blue-700', 'hover:to-blue-600');
+                } else {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }
+            } catch (error) {
+                showCustomAlert('Error adding to favorites: ' + error.message);
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+        
+        function showCustomAlert(message) {
+            // Create a custom notification instead of browser alert
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-6 py-3 rounded-lg shadow-2xl z-50 slide-in';
+            notification.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <span>🎬</span>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        // Add loading animation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const elements = document.querySelectorAll('.slide-in');
+            elements.forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.1}s`;
+            });
+        });
+    </script>
+</head>
+<body class="bg-black text-white font-sans min-h-screen relative overflow-x-hidden">
+    <!-- Animated background particles -->
+    <div class="fixed inset-0 pointer-events-none z-0">
+        <div class="absolute top-10 left-10 w-2 h-2 bg-cyan-400 rounded-full opacity-70 float-anim"></div>
+        <div class="absolute top-20 right-20 w-1 h-1 bg-blue-400 rounded-full opacity-60 float-anim" style="animation-delay: 2s;"></div>
+        <div class="absolute bottom-20 left-20 w-1.5 h-1.5 bg-purple-400 rounded-full opacity-50 float-anim" style="animation-delay: 4s;"></div>
+        <div class="absolute bottom-10 right-10 w-1 h-1 bg-cyan-300 rounded-full opacity-40 float-anim" style="animation-delay: 1s;"></div>
+    </div>
+    
+    <div class="relative z-10 max-w-6xl mx-auto p-6">
+        <!-- Main Header -->
+        <div class="text-center mb-12 slide-in">
+            <h1 class="text-5xl font-bold mb-4 text-cyan-400">🎬 CineMind</h1>
+            <p class="text-xl text-gray-300 font-light">Movie Recommender System</p>
+            <div class="w-32 h-1 bg-gradient-to-r from-cyan-400 to-blue-400 mx-auto mt-4 rounded-full"></div>
+        </div>
+        
+        <!-- Search Form -->
+        <div class="glass-morphism rounded-2xl p-8 mb-12 neon-border slide-in">
+            <form method="POST" class="space-y-6">
+                <div>
+                    <label for="query" class="block text-lg text-cyan-300 mb-3 font-medium">
+                        🎭 Enter a movie theme, plot, or genre:
+                    </label>
+                    <div class="relative">
+                        <input type="text" name="query" id="query" value="{{ query }}" required 
+                               class="w-full bg-black/60 border-2 border-cyan-400/30 rounded-xl px-6 py-4 text-white text-lg
+                                      focus:border-cyan-400 focus:outline-none search-glow transition-all duration-300
+                                      placeholder-gray-400" 
+                               placeholder="e.g., sci-fi thriller, romantic comedy, superhero action...">
+                        <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-cyan-400">
+                            🔍
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" 
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-xl 
+                               transition-colors duration-300 text-lg">
+                    🔍 Discover Movies
+                </button>
+            </form>
+        </div>
+
+        {% if results %}
+            <!-- Recommendations Section -->
+            <div class="mb-12 slide-in">
+                <div class="flex items-center justify-center mb-8">
+                    <div class="h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent flex-1"></div>
+                    <h2 class="text-3xl font-bold text-cyan-300 mx-6 pulse-border px-4 py-2 rounded-lg bg-black/50">
+                        🎯 Top Recommendations
+                    </h2>
+                    <div class="h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent flex-1"></div>
+                </div>
+                
+                <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {% for movie in results %}
+                        <div class="glass-morphism rounded-2xl p-6 border border-cyan-400/20 movie-card-hover slide-in relative overflow-hidden group">
+                            <!-- Hover overlay -->
+                            <div class="absolute inset-0 bg-gradient-to-br from-cyan-400/10 to-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            
+                            <div class="relative z-10">
+                                <h3 class="text-xl font-bold text-cyan-400 mb-4 group-hover:text-cyan-300 transition-colors">
+                                    {{ movie.title }}
+                                </h3>
+                                
+                                <div class="space-y-3 text-sm">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="w-2 h-2 bg-blue-400 rounded-full"></span>
+                                        <span class="text-blue-300 font-medium">Type:</span>
+                                        <span class="text-gray-300">{{ movie.type }}</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="w-2 h-2 bg-purple-400 rounded-full"></span>
+                                        <span class="text-purple-300 font-medium">Year:</span>
+                                        <span class="text-gray-300">{{ movie.release_year }}</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                                        <span class="text-green-300 font-medium">Director:</span>
+                                        <span class="text-gray-300">{{ movie.director }}</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="w-2 h-2 bg-cyan-400 rounded-full"></span>
+                                        <span class="text-cyan-300 font-medium">Cast:</span>
+                                        <span class="text-gray-300 text-xs">{{ movie.cast }}</span>
+                                    </div>
+                                    <div class="flex items-start space-x-2">
+                                        <span class="w-2 h-2 bg-pink-400 rounded-full mt-1"></span>
+                                        <span class="text-pink-300 font-medium">Genres:</span>
+                                        <span class="text-gray-300 text-xs">{{ movie.listed_in }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 p-3 bg-black/40 rounded-lg border border-gray-700/30">
+                                    <p class="text-gray-400 text-xs leading-relaxed">{{ movie.description }}</p>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    {% if movie_ids and loop.index0 < movie_ids|length %}
+                                        <button onclick="addToFavourites(this)" data-movie-id="{{ movie_ids[loop.index0] }}" 
+                                                class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 
+                                                       text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 
+                                                       transform hover:scale-105 hover:shadow-lg">
+                                            ⭐ Add to Favourites
+                                        </button>
+                                    {% else %}
+                                        <button class="w-full bg-gray-700 text-gray-400 font-bold py-3 px-6 rounded-lg cursor-not-allowed" disabled>
+                                            ⏳ Processing...
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if history %}
+            <!-- History Section -->
+            <div class="mb-12 slide-in">
+                <div class="glass-morphism rounded-2xl p-8 border border-cyan-400/20">
+                    <h3 class="text-2xl font-bold text-cyan-300 mb-6 flex items-center">
+                        📚 Recent Search History
+                        <div class="ml-4 w-12 h-px bg-gradient-to-r from-cyan-400 to-transparent"></div>
+                    </h3>
+                    <div class="space-y-3">
+                        {% for item in history %}
+                            <div class="bg-black/60 p-4 rounded-xl border border-gray-700/30 hover:border-cyan-400/30 transition-colors group">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <span class="w-2 h-2 bg-cyan-400 rounded-full group-hover:animate-pulse"></span>
+                                        <strong class="text-cyan-400 group-hover:text-cyan-300 transition-colors">"{{ item.query }}"</strong>
+                                    </div>
+                                    <div class="text-gray-400 text-sm">
+                                        Found {{ item.count }} movies • {{ item.last_used.split(' ')[0] }}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Navigation Links -->
+        <div class="flex flex-wrap justify-center gap-4 slide-in">
+            <a href="/recommend" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 
+               text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 
+               hover:shadow-xl flex items-center space-x-2 group">
+                <span class="group-hover:animate-spin">🔁</span>
+                <span>New Search</span>
+            </a>
+            <a href="/favourites" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 
+               text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 
+               hover:shadow-xl flex items-center space-x-2 group">
+                <span class="group-hover:animate-bounce">⭐</span>
+                <span>Favourites</span>
+            </a>
+            <a href="/plan" class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 
+               text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 
+               hover:shadow-xl flex items-center space-x-2 group">
+                <span class="group-hover:animate-pulse">🧠</span>
+                <span>Plan with AI</span>
+            </a>
+            <a href="/" class="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 
+               text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 
+               hover:shadow-xl flex items-center space-x-2 group">
+                <span class="group-hover:animate-bounce">🏠</span>
+                <span>CineMind Home</span>
+            </a>
+        </div>
+        
+        <!-- Footer -->
+        <div class="text-center mt-16 mb-8">
+            <div class="w-24 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mb-4"></div>
+            <p class="text-gray-500 text-sm">Powered by AI • Designed for Movie Lovers</p>
+        </div>
+    </div>
+</body>
+</html>
