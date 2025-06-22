@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Favourite Movies</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #0f0f23 50%, #000000 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 128, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(128, 0, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00ffff, #0080ff, #8000ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0% { 
+                filter: drop-shadow(0 0 3px rgba(0, 255, 255, 0.2));
+            }
+            100% { 
+                filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.3));
+            }
+        }
+
+        .movie-count {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #a3a3a3;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .movie-card { 
+            background: linear-gradient(145deg, rgba(0, 0, 0, 0.7), rgba(15, 15, 35, 0.8));
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 15px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .movie-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 15px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.5), transparent, rgba(0, 128, 255, 0.5));
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 255, 255, 0.6);
+            box-shadow: 
+                0 15px 45px rgba(0, 0, 0, 0.4),
+                0 0 25px rgba(0, 255, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .movie-card:hover::before {
+            opacity: 1;
+        }
+
+        .watched { 
+            background: linear-gradient(145deg, rgba(0, 128, 0, 0.2), rgba(0, 255, 0, 0.1));
+            border-color: rgba(0, 255, 0, 0.5);
+            opacity: 0.9;
+        }
+
+        .watched::before {
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.3), transparent, rgba(0, 200, 0, 0.3));
+        }
+
+        .movie-card h3 {
+            color: #00ffff;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        .movie-card p {
+            margin-bottom: 8px;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+
+        .movie-card p strong {
+            color: #a3a3a3;
+            font-weight: 600;
+            display: inline-block;
+            min-width: 90px;
+        }
+
+        .status-watched {
+            color: #00ff00 !important;
+            font-weight: 600;
+            text-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+        }
+
+        .status-unwatched {
+            color: #ffa500 !important;
+            font-weight: 600;
+            text-shadow: 0 0 8px rgba(255, 165, 0, 0.5);
+        }
+
+        .btn { 
+            background: linear-gradient(135deg, #0080ff, #0060d0);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 8px 5px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 128, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 128, 255, 0.2);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #00a0ff, #0070f0);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 128, 255, 0.4);
+            border-color: rgba(0, 255, 255, 0.6);
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-success { 
+            background: linear-gradient(135deg, #00ff00, #00d000);
+            border-color: rgba(0, 255, 0, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.2);
+        }
+
+        .btn-success:hover { 
+            background: linear-gradient(135deg, #20ff20, #00f000);
+            box-shadow: 0 8px 25px rgba(0, 255, 0, 0.4);
+            border-color: rgba(0, 255, 0, 0.6);
+        }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .rating-input, .notes-input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: #ffffff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 5px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .rating-input {
+            width: 70px;
+        }
+
+        .notes-input {
+            width: 300px;
+        }
+
+        .rating-input:focus, .notes-input:focus {
+            outline: none;
+            border-color: rgba(0, 255, 255, 0.8);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .rating-input::placeholder, .notes-input::placeholder {
+            color: #888;
+        }
+
+        .input-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .input-section label {
+            color: #a3a3a3;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+
+        .no-movies {
+            text-align: center;
+            color: #a3a3a3;
+            font-size: 1.2rem;
+            margin: 50px 0;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .navigation {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .nav-separator {
+            color: #666;
+            margin: 0 10px;
+        }
+
+        @media (max-width: 768px) {
+            .notes-input {
+                width: 100%;
+                max-width: 280px;
+            }
+            
+            .movie-card {
+                padding: 20px;
+                margin: 15px 0;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                margin: 5px 2px;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .movie-card {
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        .movie-card:nth-child(odd) {
+            animation-delay: 0.1s;
+        }
+
+        .movie-card:nth-child(even) {
+            animation-delay: 0.2s;
+        }
+    </style>
+    <script>
+        async function markAsWatched(movieId) {
+            const rating = document.getElementById(`rating-${movieId}`).value;
+            const notes = document.getElementById(`notes-${movieId}`).value;
+            
+            try {
+                const response = await fetch('/mark_watched', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        movie_id: movieId, 
+                        rating: rating ? parseInt(rating) : null, 
+                        notes: notes 
+                    })
+                });
+                
+                const data = await response.json();
+                alert(data.message);
+                
+                if (data.success) {
+                    // Update UI
+                    const card = document.getElementById(`movie-${movieId}`);
+                    card.classList.add('watched');
+                    const button = document.getElementById(`watch-btn-${movieId}`);
+                    button.textContent = '✓ Watched';
+                    button.disabled = true;
+                    button.classList.add('btn-success');
+                }
+            } catch (error) {
+                alert('Error marking as watched: ' + error.message);
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>⭐ Your Favourite Movies</h1>
+    
+    {% if favorites %}
+        <p class="movie-count">You have {{ favorites|length }} favourite movies</p>
+        {% for movie in favorites %}
+            <div id="movie-{{ movie.id }}" class="movie-card {% if movie.watched %}watched{% endif %}">
+                <h3>{{ movie.title }}</h3>
+                <p><strong>Type:</strong> {{ movie.type }}</p>
+                <p><strong>Year:</strong> {{ movie.release_year }}</p>
+                <p><strong>Director:</strong> {{ movie.director }}</p>
+                <p><strong>Cast:</strong> {{ movie.cast }}</p>
+                <p><strong>Genres:</strong> {{ movie.listed_in }}</p>
+                <p><strong>Description:</strong> {{ movie.description }}</p>
+                <p><strong>Added:</strong> {{ movie.added_date.split(' ')[0] }}</p>
+                <p><strong>Status:</strong> 
+                    {% if movie.watched %}
+                        <span class="status-watched">✓ Watched</span>
+                    {% else %}
+                        <span class="status-unwatched">⏳ Not watched</span>
+                    {% endif %}
+                </p>
+                
+                {% if not movie.watched %}
+                    <div class="input-section">
+                        <label>Rating (1-10):</label>
+                        <input type="number" id="rating-{{ movie.id }}" class="rating-input" min="1" max="10">
+                        <label>Notes:</label>
+                        <input type="text" id="notes-{{ movie.id }}" class="notes-input" placeholder="Your thoughts...">
+                        <button id="watch-btn-{{ movie.id }}" onclick="markAsWatched({{ movie.id }})" class="btn">Mark as Watched</button>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-movies">
+            <p>No favourite movies yet. Go back and add some movies to your favourites!</p>
+        </div>
+    {% endif %}
+    
+    <div class="navigation">
+        <a href="/recommend" class="btn">← Back to App</a><span class="nav-separator">|</span>
+        <a href="/plan" class="btn">🧠 Plan with AI</a><span class="nav-separator">|</span>
+        <a href="/" class="btn">🏠 CineMind Home</a>
+    </div>
+</body>
+</html>

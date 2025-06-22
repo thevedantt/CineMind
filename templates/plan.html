@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Movie Planner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #0f0f23 50%, #000000 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 128, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(128, 0, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00ffff, #0080ff, #8000ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0% { 
+                filter: drop-shadow(0 0 3px rgba(0, 255, 255, 0.2));
+            }
+            100% { 
+                filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.3));
+            }
+        }
+
+        .plan-container { 
+            background: linear-gradient(145deg, rgba(0, 0, 0, 0.7), rgba(15, 15, 35, 0.8));
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            position: relative;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .plan-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 15px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), transparent, rgba(0, 128, 255, 0.3));
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .plan-container:hover {
+            transform: translateY(-2px);
+            border-color: rgba(0, 255, 255, 0.5);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(0, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .plan-container:hover::before {
+            opacity: 1;
+        }
+
+        .favorites-summary { 
+            background: linear-gradient(145deg, rgba(128, 0, 255, 0.1), rgba(255, 0, 128, 0.1));
+            border: 1px solid rgba(128, 0, 255, 0.3);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .favorites-summary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 15px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(128, 0, 255, 0.3), transparent, rgba(255, 0, 128, 0.3));
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .favorites-summary:hover {
+            transform: translateY(-2px);
+            border-color: rgba(128, 0, 255, 0.5);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(128, 0, 255, 0.1);
+        }
+
+        .favorites-summary:hover::before {
+            opacity: 1;
+        }
+
+        .favorites-summary h3, .plan-container h3 {
+            color: #00ffff;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+        }
+
+        .favorites-summary h4 {
+            color: #a855f7;
+            font-size: 1.1rem;
+            margin: 15px 0 10px 0;
+            font-weight: 600;
+        }
+
+        .favorites-summary p {
+            color: #e0e0e0;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .favorites-summary strong {
+            color: #00ffff;
+            font-weight: 600;
+        }
+
+        .favorites-summary ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .favorites-summary li {
+            color: #e0e0e0;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(128, 0, 255, 0.2);
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .favorites-summary li::before {
+            content: '▶';
+            position: absolute;
+            left: 0;
+            color: #a855f7;
+            font-size: 0.8rem;
+        }
+
+        .favorites-summary li strong {
+            color: #ffffff;
+        }
+
+        .btn { 
+            background: linear-gradient(135deg, #0080ff, #0060d0);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 8px 5px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 128, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 128, 255, 0.2);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #00a0ff, #0070f0);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 128, 255, 0.4);
+            border-color: rgba(0, 255, 255, 0.6);
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .loading { 
+            color: #a3a3a3;
+            font-style: italic;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                border-color: rgba(0, 255, 255, 0.2);
+                box-shadow: 0 0 5px rgba(0, 255, 255, 0.1);
+            }
+            50% { 
+                border-color: rgba(0, 255, 255, 0.4);
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+            }
+        }
+
+        .error { 
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            font-weight: 500;
+        }
+
+        .success { 
+            color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+        }
+
+        .success h3 {
+            color: #00ff00;
+            margin-bottom: 15px;
+            text-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+        }
+
+        .success pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 0, 0.2);
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        .plan-container p {
+            color: #a3a3a3;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .plan-container em {
+            color: #00ffff;
+            font-style: normal;
+            font-weight: 500;
+        }
+
+        .navigation {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .nav-separator {
+            color: #666;
+            margin: 0 10px;
+        }
+
+        @media (max-width: 768px) {
+            .plan-container, .favorites-summary {
+                padding: 20px;
+                margin: 15px 0;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                margin: 5px 2px;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .plan-container, .favorites-summary {
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        .favorites-summary {
+            animation-delay: 0.1s;
+        }
+
+        .plan-container {
+            animation-delay: 0.2s;
+        }
+        
+        .plan-content h1, .plan-content h2, .plan-content h3, .plan-content h4 {
+            color: #00ffff;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            padding-bottom: 5px;
+        }
+
+        .plan-content p {
+            margin-bottom: 12px;
+            line-height: 1.7;
+            color: #e0e0e0;
+        }
+
+        .plan-content ul {
+            list-style: none;
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .plan-content li {
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .plan-content li::before {
+            content: '▶';
+            position: absolute;
+            left: -20px;
+            color: #00ffff;
+            font-size: 0.8rem;
+            top: 5px;
+        }
+
+        .plan-content strong {
+            color: #00ffff;
+            font-weight: 600;
+        }
+
+        .plan-content code {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #f39c12;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        async function generatePlan() {
+            const responseBox = document.getElementById("response");
+            responseBox.innerHTML = '<div class="loading">🤖 Generating your personalized movie plan...</div>';
+
+            try {
+                const response = await fetch("/generate_plan", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" }
+                });
+
+                const data = await response.json();
+                
+                if (data.plan) {
+                    const planHtml = marked.parse(data.plan);
+                    responseBox.innerHTML = `<div class="success"><div class="plan-content">${planHtml}</div></div>`;
+                } else {
+                    responseBox.innerHTML = '<div class="error">❌ No plan generated. Please try again.</div>';
+                }
+            } catch (error) {
+                responseBox.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Generate plan when page loads
+        window.onload = generatePlan;
+    </script>
+</head>
+<body>
+    <h1>🧠 AI-Powered Movie Planner</h1>
+    
+    <div class="favorites-summary">
+        <h3>📊 Your Favorites Summary</h3>
+        {% if favorites %}
+            <p>You have <strong>{{ favorites|length }}</strong> favorite movies</p>
+            <p><strong>Watched:</strong> {{ favorites|selectattr('watched', 'equalto', true)|list|length }} | 
+               <strong>Unwatched:</strong> {{ favorites|selectattr('watched', 'equalto', false)|list|length }}</p>
+            
+            <h4>Your Unwatched Movies:</h4>
+            <ul>
+            {% for movie in favorites %}
+                {% if not movie.watched %}
+                    <li><strong>{{ movie.title }}</strong> ({{ movie.listed_in }})</li>
+                {% endif %}
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>❌ No favorite movies found! Add some movies to your favorites first.</p>
+        {% endif %}
+    </div>
+
+    <div class="plan-container">
+        <h3>🎯 AI-Generated Schedule</h3>
+        <p><em>Generating a personalized plan based on your <strong>{{ favorites|selectattr('watched', 'equalto', false)|list|length }}</strong> unwatched movies...</em></p>
+        <div id="response" class="mt-4">Loading...</div>
+    </div>
+    
+    <div class="navigation">
+        <a href="/recommend" class="btn">← Back to App</a><span class="nav-separator">|</span>
+        <a href="/favourites" class="btn">⭐ View Favourites</a><span class="nav-separator">|</span>
+        <a href="/" class="btn">🏠 CineMind Home</a>
+    </div>
+</body>
+</html>
